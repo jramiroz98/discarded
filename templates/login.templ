@@ -1,0 +1,14 @@
+package templates
+
+templ Login() {
+	@Layout() {
+        <div class="px-4 mx-2 my-24 bg-slate-100 rounded-md p-2">
+        <h2 class="text-2xl font-semibold py-2">Login</h2>
+		<form class="space-y-4 py-4" hx-post="/login">
+			<input name="email" type="email" placeholder="email" class="rounded-sm px-2 py-3"/>
+			<input name="password" type="password" placeholder="password" class="rounded-sm px-2 py-3"/>
+            <button type="submit" class="p-4 bg-sky-400 text-white rounded-md">Submit</button>
+		</form>
+        </div>
+	}
+}

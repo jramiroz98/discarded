@@ -1,0 +1,40 @@
+package templates
+
+templ Layout() {
+	<html>
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			// <script src="https://unpkg.com/htmx.org@1.9.11"></script>
+			<script src="/static/htmx.min.js"></script>
+			<link rel="stylesheet" href="/static/css/output.css"/>
+			// <script src="https://cdn.tailwindcss.com"></script>
+			<!-- Development version -->
+			<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+			<!-- Production version -->
+			// <script src="https://unpkg.com/lucide@latest"></script>
+			<title>Go Templ and HTMX are the holy trinity</title>
+		</head>
+		<body>
+			<nav class=" flex justify-center px-12  bg-sky-950 drop-shadow-lg">
+				<a href="/" class="">
+					<img src="/static/images/Discarded Logo.png" alt="Discarded Logo" class="w-60"/>
+				</a>
+			</nav>
+			<main class="">
+				{ children... }
+			</main>
+			<div class="bg-zinc-200 py-10">
+			<p class="text-center mx-auto">
+			<a href="https://patreon.com/jramiroz98" target="_blank" rel="noopener noreferrer" class="bg-[#052d49] text-white fonte-semibold px-4 py-2 rounded-md transition-all hover:px-8 hover:py-4">Support me on <span class="text-[#f96854]">Patreon</span></a>
+			</p>
+			<p class="text-center mx-auto my-4 font-serif">Thank you!</p>
+			</div>
+			// Footer
+		
+			<script type="text/javascript">
+                    lucide.createIcons();
+                </script>
+		</body>
+	</html>
+}

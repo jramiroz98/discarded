@@ -1,0 +1,2 @@
+p, guest, /foo, GET
+p, admin, /bar, POST

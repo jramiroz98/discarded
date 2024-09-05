@@ -1,0 +1,9 @@
+To run it in dev you need to set up 3 terminals
+
+1. npx tailwindcss -i ./static/css/input.css -o ./static/css/output.css --watch
+2. templ generate --watch
+3. air
+
+** SQLITE
+Important: because this is a CGO enabled package, you are required to set the environment variable CGO_ENABLED=1 and have a gcc compiler present within your path.
+
