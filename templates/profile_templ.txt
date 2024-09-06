@@ -1,0 +1,2 @@
+<div class=\"\"><h2>Profile page</h2><p>Welcome 
+</p><a href=\"/logout\">Logout</a></div>

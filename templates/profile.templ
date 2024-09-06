@@ -1,0 +1,11 @@
+package templates
+
+templ Profile(name string) {
+	@Layout() {
+		<div class="">
+            <h2>Profile page</h2>
+            <p>Welcome { name }</p>
+            <a href="/logout">Logout</a>
+		</div>
+	}
+}

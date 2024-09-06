@@ -136,8 +136,22 @@ func login(c echo.Context) error {
 	cookie.HttpOnly = true
 	cookie.Secure = true // Ensure this is true when serving over HTTPS
 	c.SetCookie(cookie)
-	return c.String(http.StatusOK, "Welcome")
+	c.Response().Header().Set("HX-Redirect", "/")
+	// Return a successful response
+	return c.NoContent(http.StatusOK)
+	// return c.Redirect(http.StatusSeeOther, "/login")
 }
+func logout(c echo.Context) error {
+	cookie := new(http.Cookie)
+	cookie.Name = "JWTToken"
+	cookie.Value = ""
+	cookie.Expires = time.Now().Add(-time.Hour)
+	cookie.HttpOnly = true
+	cookie.Secure = true // Ensure this is true when serving over HTTPS
+	c.SetCookie(cookie)
+	return c.Redirect(http.StatusSeeOther, "/login")
+}
+
 func jwtFromCookie(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		cookie, err := c.Cookie("JWTToken")
@@ -206,8 +220,15 @@ func optionalJwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		return next(c)
 	}
 }
-
-// Use the new middleware function
+func profileHandler(c echo.Context) error {
+	user := c.Get("user")
+	if user == nil {
+		return c.Redirect(http.StatusSeeOther, "/login")
+	}
+	claims := user.(*jwt.Token).Claims.(*jwtCustomClaims)
+	name := claims.Email
+	return Render(c, http.StatusOK, templates.Profile(name))
+}
 
 func main() {
 	e := echo.New()
@@ -217,6 +238,8 @@ func main() {
 	e.GET("/login", loginGET)
 	e.POST("/register", register)
 	e.GET("/register", registerGET)
+	e.GET("/logout", logout)
+	e.GET("/profile", profileHandler)
 	r := e.Group("/restricted")
 	// Configure middleware with the custom claims type
 	config := echojwt.Config{
