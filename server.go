@@ -144,7 +144,6 @@ func jwtFromCookie(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			return next(c)
 		}
-
 		c.Request().Header.Set("Authorization", "Bearer "+cookie.Value)
 		return next(c)
 	}
@@ -188,6 +187,27 @@ func database(command string) {
 		log.Fatal(err)
 	}
 }
+func optionalJwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Try to extract the JWT token from the request
+		// token, err := echojwt.FromContext(c)
+		token, err := c.Cookie("JWTToken")
+		if err == nil && token != nil {
+			// If the token is present, parse it
+			claims, err := jwt.ParseWithClaims(token.Value, new(jwtCustomClaims), func(token *jwt.Token) (interface{}, error) {
+				return []byte("secret"), nil
+			})
+			if err == nil && claims.Valid {
+				// If the token is valid, store the user info in the context
+				c.Set("user", claims)
+			}
+		}
+		// Pass the request to the next handler
+		return next(c)
+	}
+}
+
+// Use the new middleware function
 
 func main() {
 	e := echo.New()
@@ -208,6 +228,7 @@ func main() {
 	r.Use(echojwt.WithConfig(config))
 	e.Use(jwtFromCookie)
 	// e.Use(echojwt.WithConfig(config))
+	e.Use(optionalJwtMiddleware)
 	r.GET("", restricted)
 	e.GET("/", HomeHandler)
 	e.GET("/about", AboutHandler)
@@ -228,6 +249,13 @@ func Render(ctx echo.Context, statusCode int, t templ.Component) error {
 }
 
 func HomeHandler(c echo.Context) error {
+	user := c.Get("user")
+	if user != nil {
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(*jwtCustomClaims)
+		name := claims.Email
+		println(name)
+	}
 	return Render(c, http.StatusOK, templates.Home())
 }
 func loginGET(c echo.Context) error {
