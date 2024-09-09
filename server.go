@@ -231,6 +231,16 @@ func profileHandler(c echo.Context) error {
 }
 
 func main() {
+	if _, err := os.Stat("./database/database.db"); err == nil {
+		println("database found")
+	} else {
+		println("database not found, creating database ...")
+		err := os.MkdirAll("database", 0750)
+		if err != nil {
+			log.Fatal(err)
+		}
+		os.Create("./database/database.db")
+	}
 	e := echo.New()
 	// e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
