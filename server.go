@@ -240,6 +240,9 @@ func main() {
 			log.Fatal(err)
 		}
 		os.Create("./database/database.db")
+		mainQuery := "CREATE TABLE if not exists users (id INTEGER PRIMARY KEY, email TEXT, hash BLOB, date_created TEXT, date_updated TEXT, admin TEXT, salt BLOB, hash2 TEXT, salt2 TEXT);"
+		sourdoughPizzaQuery := "CREATE TABLE if not exists sourdough_pizza (id INTEGER PRIMARY KEY, starter REAL NOT NULL, number REAL NOT NULL, weight REAL NOT NULL, hydration REAL NOT NULL, salt REAL NOT NULL);"
+
 	}
 	e := echo.New()
 	// e.Use(middleware.Logger())
