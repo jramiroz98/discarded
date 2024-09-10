@@ -240,9 +240,25 @@ func main() {
 			log.Fatal(err)
 		}
 		os.Create("./database/database.db")
-		mainQuery := "CREATE TABLE if not exists users (id INTEGER PRIMARY KEY, email TEXT, hash BLOB, date_created TEXT, date_updated TEXT, admin TEXT, salt BLOB, hash2 TEXT, salt2 TEXT);"
-		sourdoughPizzaQuery := "CREATE TABLE if not exists sourdough_pizza (id INTEGER PRIMARY KEY, starter REAL NOT NULL, number REAL NOT NULL, weight REAL NOT NULL, hydration REAL NOT NULL, salt REAL NOT NULL);"
-
+	}
+	db, err := sql.Open("sqlite3", "./database/database.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	// CREATE USERS TABLE
+	mainQuery := "CREATE TABLE if not exists users (id INTEGER PRIMARY KEY, email TEXT, hash BLOB, date_created TEXT, date_updated TEXT, admin TEXT, salt BLOB, hash2 TEXT, salt2 TEXT);"
+	_, err = db.Exec(mainQuery)
+	if err != nil {
+		log.Printf("%q: %s\n", err, mainQuery)
+		return
+	}
+	// CREATE SOURDOUGH PIZZA TABLE
+	sourdoughPizzaQuery := "CREATE TABLE if not exists sourdough_pizza (id INTEGER PRIMARY KEY, starter REAL NOT NULL, number REAL NOT NULL, weight REAL NOT NULL, hydration REAL NOT NULL, salt REAL NOT NULL);"
+	_, err = db.Exec(sourdoughPizzaQuery)
+	if err != nil {
+		log.Printf("%q: %s\n", err, sourdoughPizzaQuery)
+		return
 	}
 	e := echo.New()
 	// e.Use(middleware.Logger())
