@@ -193,7 +193,8 @@ func database(command string) {
 		var number string
 		var starter string
 		var salt string
-		err = rows.Scan(&id, &weight, &hydration, &number, &starter, &salt)
+		var owner_id int
+		err = rows.Scan(&id, &weight, &hydration, &number, &starter, &salt, &owner_id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -233,6 +234,91 @@ func profileHandler(c echo.Context) error {
 	return Render(c, http.StatusOK, templates.Profile(name))
 }
 
+func recipesHandler(c echo.Context) error {
+	m := make(map[string]string)
+	n := make(map[string]string, 0)
+	user := c.Get("user")
+	var email string
+	var owner_id int
+	if user != nil {
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(*jwtCustomClaims)
+		email = claims.Email
+		println(email)
+	}
+	const file string = "./database/database.db"
+	db, err := sql.Open("sqlite3", file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	_, err = db.Exec("PRAGMA foreign_keys = ON")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Get user data from the database
+	rows, err := db.Query("SELECT * FROM users WHERE email = ?", email)
+	if err != nil {
+		// Handle the error
+		panic(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var email string
+		var hash []byte
+		var dateCreated string
+		var dateUpdated string
+		var admin string
+		var salt []byte
+		var hash2 string
+		var salt2 string
+
+		err := rows.Scan(&id, &email, &hash, &dateCreated, &dateUpdated, &admin, &salt, &hash2, &salt2)
+		if err != nil {
+			// Handle the error
+			panic(err)
+		}
+		owner_id = id
+	}
+
+	query := "SELECT * FROM sourdough_pizza WHERE owner_id=?;"
+	rows, err = db.Query(query, owner_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		var weight string
+		var hydration string
+		var number string
+		var starter string
+		var salt string
+		var owner_id int
+		err = rows.Scan(&id, &weight, &hydration, &number, &starter, &salt, &owner_id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		m["id"] = string(id)
+		m["weight"] = weight
+		m["hydration"] = hydration
+		m["number"] = number
+		m["starter"] = starter
+		m["salt"] = salt
+
+		n = append(n, m)
+		fmt.Println(id, weight, hydration, salt, starter, number)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	println(m)
+	return Render(c, http.StatusOK, templates.SavedRecipes(m))
+}
+
 func main() {
 	if _, err := os.Stat("./database/database.db"); err == nil {
 		println("database found")
@@ -257,7 +343,7 @@ func main() {
 		return
 	}
 	// CREATE SOURDOUGH PIZZA TABLE
-	sourdoughPizzaQuery := "CREATE TABLE if not exists sourdough_pizza (id INTEGER PRIMARY KEY, starter REAL NOT NULL, number REAL NOT NULL, weight REAL NOT NULL, hydration REAL NOT NULL, salt REAL NOT NULL);"
+	sourdoughPizzaQuery := "CREATE TABLE IF NOT EXISTS sourdough_pizza (id INTEGER PRIMARY KEY, starter INTEGER, number INTEGER, weight INTEGER, hydration INTEGER, salt INTEGER, owner_id INTEGER, FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE CASCADE);"
 	_, err = db.Exec(sourdoughPizzaQuery)
 	if err != nil {
 		log.Printf("%q: %s\n", err, sourdoughPizzaQuery)
@@ -287,8 +373,10 @@ func main() {
 	r.GET("", restricted)
 	e.GET("/", HomeHandler)
 	e.GET("/about", AboutHandler)
+	e.GET("/saved-recipes", recipesHandler)
 	e.GET("/recipe/sourdough-pizza", SourdoughPizzaRecipeGET)
 	e.POST("/recipe/sourdough-pizza", SourdoughPizzaPOST)
+	e.POST("/recipe/sourdough-pizza-save", SourdoughPizzaSavePOST)
 	e.Static("/static", "static")
 	e.File("/favicon.ico", "static/favicon/favicon.ico")
 	e.Logger.Fatal(e.Start(":1324"))
@@ -378,22 +466,112 @@ func SourdoughPizzaPOST(c echo.Context) error {
 	if total_weight < starter {
 		return c.String(http.StatusOK, "Too Much Sourdough Starter :(")
 	}
+	return Render(c, http.StatusOK, templates.SourdoughPizzaForm(added_flour, added_water, added_salt, starter, number, weight, hydration, salt))
+}
 
+func SourdoughPizzaSavePOST(c echo.Context) error {
+	user := c.Get("user")
+	var email string
+	var owner_id int
+	if user != nil {
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(*jwtCustomClaims)
+		email = claims.Email
+		println(email)
+	}
 	const file string = "./database/database.db"
 	db, err := sql.Open("sqlite3", file)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
+	_, err = db.Exec("PRAGMA foreign_keys = ON")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	query := "INSERT INTO sourdough_pizza(starter, number, weight, hydration, salt) values(?, ?, ?, ?, ?)"
+	// Get user data from the database
+	rows, err := db.Query("SELECT * FROM users WHERE email = ?", email)
+	if err != nil {
+		// Handle the error
+		panic(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var email string
+		var hash []byte
+		var dateCreated string
+		var dateUpdated string
+		var admin string
+		var salt []byte
+		var hash2 string
+		var salt2 string
+
+		err := rows.Scan(&id, &email, &hash, &dateCreated, &dateUpdated, &admin, &salt, &hash2, &salt2)
+		if err != nil {
+			// Handle the error
+			panic(err)
+		}
+		owner_id = id
+		// Process the user data
+		// ...
+	}
+
+	starter, err := strconv.ParseFloat(c.FormValue("starter"), 32)
+	if err != nil {
+		// ... handle error
+		panic(err)
+	}
+	number, err := strconv.ParseFloat(c.FormValue("number"), 32)
+	if err != nil {
+		// ... handle error
+		panic(err)
+	}
+	weight, err := strconv.ParseFloat(c.FormValue("weight"), 32)
+	if err != nil {
+		// ... handle error
+		panic(err)
+	}
+	hydration, err := strconv.ParseFloat(c.FormValue("hydration"), 32)
+	if err != nil {
+		// ... handle error
+		panic(err)
+	}
+	salt, err := strconv.ParseFloat(c.FormValue("salt"), 32)
+	if err != nil {
+		// ... handle error
+		panic(err)
+	}
+
+	total_weight := weight * number
+	starter_water := starter / 2
+	starter_flour := starter / 2
+	// total weight = total_flour + total_water + salt
+	// total weight = total flour + total flour*hydration + salt*saltpercentage
+	total_flour := total_weight / (hydration/100 + 1 + salt/100)
+	total_water := total_flour * (hydration / 100)
+	added_water := total_water - starter_water
+	added_flour := total_flour - starter_flour
+	added_salt := total_flour * salt / 100
+	println(added_water)
+	println(added_flour)
+	println(added_salt)
+
+	if total_weight < starter {
+		return c.String(http.StatusOK, "Too Much Sourdough Starter :(")
+	}
+
+	query := "INSERT INTO sourdough_pizza(starter, number, weight, hydration, salt, owner_id) values(?, ?, ?, ?, ?, ?)"
 	stmt, err := db.Prepare(query)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer stmt.Close()
-	if _, err := stmt.Exec(starter, number, weight, hydration, salt); err != nil {
+	if _, err := stmt.Exec(starter, number, weight, hydration, salt, owner_id); err != nil {
 		log.Fatal(err)
 	}
-	return Render(c, http.StatusOK, templates.SourdoughPizzaForm(added_flour, added_water, added_salt, starter, number, weight, hydration, salt))
+	// return Render(c, http.StatusOK, templates.SourdoughPizzaForm(added_flour, added_water, added_salt, starter, number, weight, hydration, salt))
+	return c.String(http.StatusOK, "Saved!")
 }

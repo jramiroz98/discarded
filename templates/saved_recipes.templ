@@ -1,0 +1,13 @@
+package templates
+
+templ SavedRecipes(m map[string]float64) {
+	@Layout() {
+		<div class="">
+			<h2>Your Saved Recipes</h2>
+			<ul>
+				{m}
+			</ul>
+			<a href="/logout">Logout</a>
+		</div>
+	}
+}
