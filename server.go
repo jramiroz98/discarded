@@ -235,8 +235,6 @@ func profileHandler(c echo.Context) error {
 }
 
 func recipesHandler(c echo.Context) error {
-	m := make(map[string]string)
-	n := make(map[string]string, 0)
 	user := c.Get("user")
 	var email string
 	var owner_id int
@@ -246,6 +244,7 @@ func recipesHandler(c echo.Context) error {
 		email = claims.Email
 		println(email)
 	}
+	// open db connection
 	const file string = "./database/database.db"
 	db, err := sql.Open("sqlite3", file)
 	if err != nil {
@@ -259,7 +258,6 @@ func recipesHandler(c echo.Context) error {
 	// Get user data from the database
 	rows, err := db.Query("SELECT * FROM users WHERE email = ?", email)
 	if err != nil {
-		// Handle the error
 		panic(err)
 	}
 	defer rows.Close()
@@ -283,12 +281,14 @@ func recipesHandler(c echo.Context) error {
 		owner_id = id
 	}
 
+	// Get the users sourdough pizza recipes from the database
 	query := "SELECT * FROM sourdough_pizza WHERE owner_id=?;"
 	rows, err = db.Query(query, owner_id)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
+	recipes := []map[string]interface{}{}
 	for rows.Next() {
 		var id int
 		var weight string
@@ -301,22 +301,33 @@ func recipesHandler(c echo.Context) error {
 		if err != nil {
 			log.Fatal(err)
 		}
-		m["id"] = string(id)
-		m["weight"] = weight
-		m["hydration"] = hydration
-		m["number"] = number
-		m["starter"] = starter
-		m["salt"] = salt
 
-		n = append(n, m)
+		recipe := make(map[string]interface{})
+
+		recipe["weight"] = weight
+		recipe["hydration"] = hydration
+		recipe["number"] = number
+		recipe["starter"] = starter
+		recipe["salt"] = salt
+		recipes = append(recipes, recipe)
+
 		fmt.Println(id, weight, hydration, salt, starter, number)
 	}
 	err = rows.Err()
 	if err != nil {
 		log.Fatal(err)
 	}
-	println(m)
-	return Render(c, http.StatusOK, templates.SavedRecipes(m))
+	for _, recipe := range recipes {
+		fmt.Println("Recipe:")
+		fmt.Println("Weight:", recipe["weight"])
+		fmt.Println("Hydration:", recipe["hydration"])
+		fmt.Println("Number:", recipe["number"])
+		fmt.Println("Starter:", recipe["starter"])
+		fmt.Println("Salt:", recipe["salt"])
+		fmt.Println("------------------------")
+	}
+
+	return Render(c, http.StatusOK, templates.SavedRecipes(recipes))
 }
 
 func main() {
