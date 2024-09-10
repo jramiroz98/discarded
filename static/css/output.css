@@ -659,14 +659,6 @@ video {
   width: 100%;
 }
 
-.w-40 {
-  width: 10rem;
-}
-
-.w-24 {
-  width: 6rem;
-}
-
 .basis-1\/2 {
   flex-basis: 50%;
 }

@@ -70,7 +70,10 @@ func register(c echo.Context) error {
 	if _, err := stmt.Exec(email, string(hashSalt.Hash), string(hashSalt.Salt)); err != nil {
 		log.Fatal(err)
 	}
-	return c.String(http.StatusOK, "Registered")
+	c.Response().Header().Set("HX-Redirect", "/login")
+	// Return a successful response
+	return c.NoContent(http.StatusOK)
+	// return c.String(http.StatusOK, "Registered")
 }
 
 func login(c echo.Context) error {
@@ -374,6 +377,23 @@ func SourdoughPizzaPOST(c echo.Context) error {
 
 	if total_weight < starter {
 		return c.String(http.StatusOK, "Too Much Sourdough Starter :(")
+	}
+
+	const file string = "./database/database.db"
+	db, err := sql.Open("sqlite3", file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	query := "INSERT INTO sourdough_pizza(starter, number, weight, hydration, salt) values(?, ?, ?, ?, ?)"
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+	if _, err := stmt.Exec(starter, number, weight, hydration, salt); err != nil {
+		log.Fatal(err)
 	}
 	return Render(c, http.StatusOK, templates.SourdoughPizzaForm(added_flour, added_water, added_salt, starter, number, weight, hydration, salt))
 }
