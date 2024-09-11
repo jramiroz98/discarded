@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"time"
 
+	"myapp/models"
+
 	"github.com/a-h/templ"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -288,7 +290,8 @@ func recipesHandler(c echo.Context) error {
 		log.Fatal(err)
 	}
 	defer rows.Close()
-	recipes := []map[string]interface{}{}
+
+	recipes_sourdough_pizza := []models.Sourdough_pizza_recipe{}
 	for rows.Next() {
 		var id int
 		var weight string
@@ -301,33 +304,29 @@ func recipesHandler(c echo.Context) error {
 		if err != nil {
 			log.Fatal(err)
 		}
+		starterFloat, _ := strconv.ParseFloat(starter, 32)
+		numberFloat, _ := strconv.ParseFloat(number, 32)
+		weightFloat, _ := strconv.ParseFloat(weight, 32)
+		hydrationFloat, _ := strconv.ParseFloat(hydration, 32)
+		saltFloat, _ := strconv.ParseFloat(salt, 32)
+		added_water, added_flour, added_salt := sourdoughPizzaCalc(float32(starterFloat), float32(numberFloat), float32(weightFloat), float32(hydrationFloat), float32(saltFloat))
+		added_water_str := strconv.FormatFloat(float64(added_water), 'f', 2, 32)
+		added_flour_str := strconv.FormatFloat(float64(added_flour), 'f', 2, 32)
+		added_salt_str := strconv.FormatFloat(float64(added_salt), 'f', 2, 32)
 
-		recipe := make(map[string]interface{})
-
-		recipe["weight"] = weight
-		recipe["hydration"] = hydration
-		recipe["number"] = number
-		recipe["starter"] = starter
-		recipe["salt"] = salt
-		recipes = append(recipes, recipe)
-
-		fmt.Println(id, weight, hydration, salt, starter, number)
+		recipe := models.Sourdough_pizza_recipe{
+			Weight:      weight,
+			Hydration:   hydration,
+			Number:      number,
+			Starter:     starter,
+			Salt:        salt,
+			Added_flour: added_flour_str,
+			Added_water: added_water_str,
+			Added_salt:  added_salt_str,
+		}
+		recipes_sourdough_pizza = append(recipes_sourdough_pizza, recipe)
 	}
-	err = rows.Err()
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, recipe := range recipes {
-		fmt.Println("Recipe:")
-		fmt.Println("Weight:", recipe["weight"])
-		fmt.Println("Hydration:", recipe["hydration"])
-		fmt.Println("Number:", recipe["number"])
-		fmt.Println("Starter:", recipe["starter"])
-		fmt.Println("Salt:", recipe["salt"])
-		fmt.Println("------------------------")
-	}
-
-	return Render(c, http.StatusOK, templates.SavedRecipes(recipes))
+	return Render(c, http.StatusOK, templates.SavedRecipes(recipes_sourdough_pizza))
 }
 
 func main() {
@@ -435,6 +434,19 @@ func AboutHandler(c echo.Context) error {
 func SourdoughPizzaRecipeGET(c echo.Context) error {
 	database("SELECT * FROM sourdough_pizza;")
 	return Render(c, http.StatusOK, templates.Recipe())
+}
+func sourdoughPizzaCalc(starter float32, number float32, weight float32, hydration float32, salt float32) (float32, float32, float32) {
+	total_weight := weight * number
+	starter_water := starter / 2
+	starter_flour := starter / 2
+	// total weight = total_flour + total_water + salt
+	// total weight = total flour + total flour*hydration + salt*saltpercentage
+	total_flour := total_weight / (hydration/100 + 1 + salt/100)
+	total_water := total_flour * (hydration / 100)
+	added_water := total_water - starter_water
+	added_flour := total_flour - starter_flour
+	added_salt := total_flour * salt / 100
+	return added_flour, added_water, added_salt
 }
 func SourdoughPizzaPOST(c echo.Context) error {
 	starter, err := strconv.ParseFloat(c.FormValue("starter"), 32)

@@ -1,28 +1,40 @@
 package templates
 
-templ SavedRecipes(recipes []map[string]interface{}) {
+import ("myapp/models")
+
+
+templ SavedRecipes(recipes []models.Sourdough_pizza_recipe) {
 	@Layout() {
-		<div class="">
-			<h2>Your Saved Recipes</h2>
-			<ul>
+		<div class="px-2 py-6">
+			<h2 class="font-semibold text-2xl">Your Saved Recipes</h2>
 				for _, recipe := range recipes {
+			<ul class="my-6 bg-slate-300 rounded-md p-4">
 					<li>
-					{ recipe["weight"].(string) }
+					Weight: { recipe.Weight }
 					</li>
 					<li>
-					{ recipe["hydration"].(string) }
+					Hydration: { recipe.Hydration }
 					</li>
 					<li>
-					{ recipe["number"].(string) }
+					Number: { recipe.Number }
 					</li>
 					<li>
-					{ recipe["starter"].(string) }
+					Starter: { recipe.Starter }
 					</li>
 					<li>
-					{ recipe["salt"].(string) }
+					Recipe: { recipe.Salt }
 					</li>
-				}
+					<li>
+					Added Flour: { recipe.Added_flour}
+					</li>
+					<li>
+					Added Water: { recipe.Added_water }
+					</li>
+					<li>
+					Added Salt: { recipe.Added_salt }
+					</li>
 			</ul>
+				}
 			<a href="/logout">Logout</a>
 		</div>
 	}

@@ -1,8 +1,11 @@
-<div class=\"\"><h2>Your Saved Recipes</h2><ul>
-<li>
-</li><li>
-</li><li>
-</li><li>
-</li><li>
-</li>
-</ul><a href=\"/logout\">Logout</a></div>
+<div class=\"px-2 py-6\"><h2 class=\"font-semibold text-2xl\">Your Saved Recipes</h2>
+<ul class=\"my-6 bg-slate-300 rounded-md p-4\"><li>Weight: 
+</li><li>Hydration: 
+</li><li>Number: 
+</li><li>Starter: 
+</li><li>Recipe: 
+</li><li>Added Flour: 
+</li><li>Added Water: 
+</li><li>Added Salt: 
+</li></ul>
+<a href=\"/logout\">Logout</a></div>
